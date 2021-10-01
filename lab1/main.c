@@ -1,3 +1,4 @@
+#include "stdlib.h"
 #include <stdio.h>
 #include <pthread.h>
 
@@ -7,7 +8,7 @@
 
 void *print_strings() {
     for (int i = 0; i < 10; i++) {
-        printf("new string in side thread\n");
+        fprintf(stdout,"new string inside thread\n");
     }
     return NULL;
 }
@@ -20,8 +21,8 @@ int main() {
         exit(ERROR_CODE);
     }
     for (int i = 0; i < 10; i++) {
-        printf("new string in main thread\n");
+        fprintf(stdout, "new string in main thread\n");
     }
-    pthread_exit(&pthread_id);
+    pthread_exit(NULL);
     return EXIT_SUCCESS;
 }

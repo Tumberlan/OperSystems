@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/imami/Programming/OperSystems/lab4/main.c
+stdio.h
+-
+unistd.h
+-
+pthread.h
+-
+stdlib.h
+-
+string.h
+-
+

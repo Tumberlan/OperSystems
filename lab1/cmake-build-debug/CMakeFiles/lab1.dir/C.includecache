@@ -6,7 +6,9 @@
 
 #IncludeRegexTransform: 
 
-C:/Users/Igor/ProgProjects/OperSystems/lab1/main.c
+C:/Users/imami/Programming/OperSystems/lab1/main.c
+stdlib.h
+C:/Users/imami/Programming/OperSystems/lab1/stdlib.h
 stdio.h
 -
 pthread.h
