@@ -32,17 +32,7 @@ int main() {
         if (pthread_create_result != SUCCESSFUL_RESULT) {
             perror("error in pthread_create");
             pthread_exit(NULL);
-            exit(ERROR_CODE);
-        }
-
-        pthread_create_result = pthread_join(pthread_id_array[i], NULL);
-
-        if (pthread_create_result != SUCCESSFUL_RESULT) {
-            perror("error in pthread_create");
-            pthread_exit(NULL);
-            exit(ERROR_CODE);
         }
     }
-
     pthread_exit(EXIT_SUCCESS);
 }

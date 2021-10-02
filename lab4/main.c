@@ -6,10 +6,11 @@
 
 #define STATUS_SUCCESS 0
 #define ERROR_CODE 1
+#define STRINGS_NUMBER 100000000
 #define SLEEP_TIME 2
 
 void *print_strings() {
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < STRINGS_NUMBER; i++) {
         fprintf(stdout,"new string inside thread\n");
     }
     return NULL;
@@ -34,8 +35,6 @@ int main() {
         pthread_exit(NULL);
         exit(ERROR_CODE);
     }
-    pthread_cancel_result = pthread_cancel(pthread_id);
-
     thread_res = (void *) pthread_cancel_result;
     if (thread_res == PTHREAD_CANCELED) {
         fprintf(stdout,"thread was cancelled\n");
