@@ -3,11 +3,13 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #define STATUS_SUCCESS 0
 #define ERROR_CODE 1
 #define STRINGS_NUMBER 100000000
 #define SLEEP_TIME 2
+#define ERROR_BUFFER_LEN 120
 
 void *print_strings() {
     for (int i = 0; i < STRINGS_NUMBER; i++) {
@@ -22,18 +24,20 @@ int main() {
     void *thread_res;
     long long pthread_create_result = pthread_create(&pthread_id, NULL, print_strings, NULL);
     if(pthread_create_result != STATUS_SUCCESS){
-        perror("error in pthread_create");
+        char error_buffer[ERROR_BUFFER_LEN];
+        strerror_r(errno, error_buffer, ERROR_BUFFER_LEN);
+        write(STDERR_FILENO,error_buffer, strlen(error_buffer));
         pthread_exit(NULL);
-        exit(ERROR_CODE);
     }
 
     sleep(SLEEP_TIME);
 
     long long pthread_cancel_result = pthread_cancel(pthread_id);
     if(pthread_cancel_result != STATUS_SUCCESS){
-        perror("error in pthread_cancel");
+        char error_buffer[ERROR_BUFFER_LEN];
+        strerror_r(errno, error_buffer, ERROR_BUFFER_LEN);
+        write(STDERR_FILENO,error_buffer, strlen(error_buffer));
         pthread_exit(NULL);
-        exit(ERROR_CODE);
     }
     thread_res = (void *) pthread_cancel_result;
     if (thread_res == PTHREAD_CANCELED) {
@@ -42,6 +46,5 @@ int main() {
         fprintf(stdout,"thread was joined\n");
     }
 
-    pthread_exit(NULL);
-    return EXIT_SUCCESS;
+    pthread_exit(EXIT_SUCCESS);
 }

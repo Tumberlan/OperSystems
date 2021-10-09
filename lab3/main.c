@@ -3,11 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define SUCCESSFUL_RESULT 0
 #define THREADS_NUMBER 4
 #define ERROR_CODE 1
 #define STRINGS_NUMBER 2
+#define ERROR_BUFFER_LEN 120
 
 void *print_strings(void *arg) {
     const char **strings = (const char **) arg;
@@ -19,6 +21,7 @@ void *print_strings(void *arg) {
 }
 
 int main() {
+    errno = 0;
     pthread_t pthread_id_array[THREADS_NUMBER];
     int pthread_create_result;
     char *strings[THREADS_NUMBER][STRINGS_NUMBER] = {{"first",  " thread\n"},
@@ -30,7 +33,9 @@ int main() {
         pthread_create_result = pthread_create(&pthread_id_array[i], NULL, print_strings, (void *) &strings[i]);
 
         if (pthread_create_result != SUCCESSFUL_RESULT) {
-            perror("error in pthread_create");
+            char error_buffer[ERROR_BUFFER_LEN];
+            strerror_r(errno, error_buffer, ERROR_BUFFER_LEN);
+            write(STDERR_FILENO,error_buffer, strlen(error_buffer));
             pthread_exit(NULL);
         }
     }
