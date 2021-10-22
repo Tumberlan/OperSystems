@@ -6,7 +6,15 @@
 
 #IncludeRegexTransform: 
 
-C:/Users/imami/Programming/OperSystems/lab3/main.c
+C:/Users/Igor/ProgProjects/OperSystems/lab3/main.c
 stdio.h
+-
+pthread.h
+-
+stdlib.h
+-
+string.h
+-
+unistd.h
 -
 
