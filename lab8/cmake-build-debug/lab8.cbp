@@ -74,6 +74,9 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="C:/Users/Igor/ProgProjects/OperSystems/lab8/1.c">
+			<Option target="lab8"/>
+		</Unit>
 		<Unit filename="C:/Users/Igor/ProgProjects/OperSystems/lab8/main.c">
 			<Option target="lab8"/>
 		</Unit>

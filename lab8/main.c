@@ -3,92 +3,81 @@
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
-#define STEPS_NUMBER 200000
-#define STATUS_SUCCESS 0
-#define BUFFER_DEF_LENGTH 256
+#define NUM_STEPS 200000000
+#define SUCCESSFUL_RESULT 0
+#define ERROR_BUFFER_LEN 120
 
-char errorBuffer[BUFFER_DEF_LENGTH];
+struct thread_data {
+    int index;
+    int numOfThreads;
+    double piPart;
+};
 
-typedef struct compInfo {
-    int start;
-    int end;
-} compInfo;
+void *calculate_pi_thread(void *param) {
+    struct thread_data *data = (struct thread_data *) param;
 
-void verifyPthreadFunctions(int returnCode, const char* functionName){
-    strerror_r(returnCode, errorBuffer, BUFFER_DEF_LENGTH);
-    if(returnCode < 0){
-        fprintf(stderr, "Error %s: %s\n", functionName, errorBuffer);
-        pthread_exit(NULL);
-    }
-}
-
-void * getResultsPart(void * args){
-    compInfo * info = (compInfo*) args;
-
-    if(args == NULL){
-        fprintf(stderr,"There are problems with arguments.");
-        pthread_exit(NULL);
-    }
-
-    int start = info->start;
-    int end = info->end;
-    double localPi = 0;
-
-    for (int i = start; i < end ; ++i) {
-        localPi += 1.0/(i*4.0 + 1.0);
-        localPi -= 1.0/(i*4.0 + 3.0);
-    }
-
-    double * resultedLocalPi = (double*) malloc(sizeof(double));
-
-    if(resultedLocalPi == NULL){
-        fprintf(stderr,"There are problems with allocating memory.");
-        pthread_exit(NULL);
-    }
-
-    *resultedLocalPi = localPi;
-
-    free(info);
-
-    return resultedLocalPi;
-}
-
-int main(int argc, char** argv) {
-
-    if(argc < 2){
-        fprintf(stderr, "Not enough arguments entered.\nusage: <progname> <threads_number>\n");
-        pthread_exit(NULL);
-    }
-
-    long threadsNumber = atol(argv[1]);
-
-    if(threadsNumber < 1){
-        fprintf(stderr, "Invalid threads number. Minimal number: 1. Try again.");
-        pthread_exit(NULL);
-    }
-
-    pthread_t tid[threadsNumber];
+    int index = data->index;
+    int numOfThreads = data->numOfThreads;
 
     double pi = 0;
-    int workWeight = STEPS_NUMBER/threadsNumber;
-    printf("WorkWeight: %d", workWeight);
+    int i;
 
-    for (int i = 0; i < threadsNumber ; ++i) {
-        compInfo * info = (compInfo*) malloc(sizeof(compInfo));
-        info->start = i*workWeight;
-        info->end = (i+1)*workWeight - 1;
-        verifyPthreadFunctions(pthread_create(&tid[i], NULL, getResultsPart, (void*) info), "pthread_create");
+    for (i = index; i < NUM_STEPS ; i += numOfThreads) {
+        pi += 1.0/(i*4.0 + 1.0);
+        pi -= 1.0/(i*4.0 + 3.0);
     }
-
-    for (int i = 0; i < threadsNumber ; ++i) {
-        void * piPart;
-        verifyPthreadFunctions(pthread_join(tid[i], &piPart), "pthread_join");
-        pi = pi + *((double*) piPart);
-        free(piPart);
-    }
-
     pi = pi * 4.0;
-    printf("pi done: %.15g \n", pi);
-    pthread_exit(EXIT_SUCCESS);
+
+    data->piPart = pi;
+}
+
+int main(int argc, char **argv) {
+    if (argc != 2){
+        fprintf(stdout,"Wrong number of arguments\n");
+        return EXIT_FAILURE;
+    }
+
+    char *end;
+    int numOfThreads = strtol(argv[1], &end, 10);
+
+    if (numOfThreads <= 0){
+        fprintf(stdout,"Wrong number of threads\n");
+        return EXIT_FAILURE;
+    }
+    fprintf(stdout,"Using %d threads\n", numOfThreads);
+
+    pthread_t threads[numOfThreads];
+    struct thread_data threadData[numOfThreads];
+    for (int i = 0; i < numOfThreads; i++){
+        threadData[i].index = i;
+        threadData[i].numOfThreads = numOfThreads;
+        int pthreadCreateResult = pthread_create(&threads[i], NULL, calculate_pi_thread, &threadData[i]);
+        if (pthreadCreateResult != SUCCESSFUL_RESULT) {
+            for (int j = 0; j < i; j++){
+                pthread_cancel(threads[j]);
+            }
+            char error_buffer[ERROR_BUFFER_LEN];
+            strerror_r(errno, error_buffer, ERROR_BUFFER_LEN);
+            write(STDERR_FILENO,error_buffer, strlen(error_buffer));
+            pthread_exit(NULL);
+        }
+    }
+
+    double sum = 0;
+    for (int i = 0; i < numOfThreads; i++){
+        int pthreadJoinResult = pthread_join(threads[i], NULL);
+        if (pthreadJoinResult != SUCCESSFUL_RESULT){
+            char error_buffer[ERROR_BUFFER_LEN];
+            strerror_r(errno, error_buffer, ERROR_BUFFER_LEN);
+            write(STDERR_FILENO,error_buffer, strlen(error_buffer));
+            pthread_exit(NULL);
+        }
+        sum += threadData[i].piPart;
+    }
+    printf("pi done - %.15g\n", sum);
+    printf("compare - 3.14159265358979\n");
+
+    return EXIT_SUCCESS;
 }

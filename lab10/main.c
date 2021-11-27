@@ -1,13 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <errno.h>
 #include <unistd.h>
+#include <string.h>
 
 #define PHILO 5
 #define DELAY 30000
 #define FOOD 50
 #define AFTER_EATING_SLEEP_TIME 5000000
 
+pthread_mutex_t all_forks_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t forks[PHILO];
 pthread_t phils[PHILO];
 void *philosopher (void *id);
@@ -16,16 +19,21 @@ void get_fork (int, int, char *);
 void down_forks (int, int);
 pthread_mutex_t foodlock;
 
-int sleep_seconds = 4;
 
-int
-main (int argn,
-      char **argv)
-{
+void print_error(const char *prefix, int code) {
+    if (prefix == NULL) {
+        prefix = "error";
+    }
+    char buf[256];
+    if (strerror_r(code, buf, sizeof(buf)) != 0) {
+        strcpy(buf, "(unable to generate error!)");
+    }
+    fprintf(stderr, "%s: %s\n", prefix, buf);
+}
+
+
+int main (int argn,char **argv){
     int i;
-
-    if (argn == 2)
-        sleep_seconds = atoi (argv[1]);
 
     pthread_mutex_init (&foodlock, NULL);
     for (i = 0; i < PHILO; i++)
@@ -75,8 +83,7 @@ philosopher (void *num)
     return (NULL);
 }
 
-int
-food_on_table ()
+int food_on_table ()
 {
     static int food = FOOD+1;
     int myfood;
@@ -90,8 +97,7 @@ food_on_table ()
     return myfood;
 }
 
-void
-get_fork (int phil,
+void get_fork (int phil,
           int fork,
           char *hand)
 {
@@ -99,10 +105,40 @@ get_fork (int phil,
     printf ("Philosopher %d: got %s fork %d\n", phil, hand, fork);
 }
 
-void
-down_forks (int f1,
+void down_forks (int f1,
             int f2)
 {
     pthread_mutex_unlock (&forks[f1]);
     pthread_mutex_unlock (&forks[f2]);
 }
+
+void pick_forks_up(int phil, int left_fork, int right_fork) {
+    int error_code = pthread_mutex_lock(&all_forks_mutex);
+    if (error_code != 0) {
+        print_error("Unable to lock mutex", error_code);
+        for (int i = 0; i < PHILO; i++) {
+            if (id == i) continue;
+            pthread_cancel(threads[i]);
+        }
+        pthread_cancel(threads[id]);
+    }
+
+    while (1) {
+        int lock1 = try_lock_mutex(&forks_mutex[right_fork], phil);
+        if (lock1 == LOCKED) {
+            int lock2 = try_lock_mutex(&forks_mutex[left_fork], phil);
+            if (lock2 == LOCKED) {
+                break;  //both mutexes are locked, break from while-loop
+            }
+
+            unlock_mutex(&forks_mutex[right_fork], phil); //left_fork couldn't be locked, we unlock already-locked right_fork
+        }
+
+        wait_cond(&all_forks_cond, &all_forks_mutex, phil); //wait until other philosophers put down forks and wake us up
+    }
+
+    unlock_mutex(&all_forks_mutex, phil);
+    printf("Philosopher %d: got forks %d and %d.\n", phil, left_fork, right_fork);
+}
+
+

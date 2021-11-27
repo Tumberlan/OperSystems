@@ -128,6 +128,30 @@ lab8/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\lab8.dir\build.make CMakeFiles/lab8.dir/build
 .PHONY : lab8/fast
 
+1.obj: 1.c.obj
+.PHONY : 1.obj
+
+# target to build an object file
+1.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\lab8.dir\build.make CMakeFiles/lab8.dir/1.c.obj
+.PHONY : 1.c.obj
+
+1.i: 1.c.i
+.PHONY : 1.i
+
+# target to preprocess a source file
+1.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\lab8.dir\build.make CMakeFiles/lab8.dir/1.c.i
+.PHONY : 1.c.i
+
+1.s: 1.c.s
+.PHONY : 1.s
+
+# target to generate assembly for a file
+1.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\lab8.dir\build.make CMakeFiles/lab8.dir/1.c.s
+.PHONY : 1.c.s
+
 main.obj: main.c.obj
 .PHONY : main.obj
 
@@ -161,6 +185,9 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... lab8
+	@echo ... 1.obj
+	@echo ... 1.i
+	@echo ... 1.s
 	@echo ... main.obj
 	@echo ... main.i
 	@echo ... main.s

@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/lab8.dir/1.c.obj"
   "CMakeFiles/lab8.dir/main.c.obj"
   "lab8.exe"
   "lab8.exe.manifest"
