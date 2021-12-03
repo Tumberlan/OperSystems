@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define NUM_STEPS 200000000
+#define NUM_STEPS 20000
 #define SUCCESSFUL_RESULT 0
 #define ERROR_BUFFER_LEN 120
 
@@ -50,12 +50,14 @@ int main(int argc, char **argv) {
 
     pthread_t threads[numOfThreads];
     struct thread_data threadData[numOfThreads];
-    for (int i = 0; i < numOfThreads; i++){
+    int i;
+    for (i = 0; i < numOfThreads; i++){
         threadData[i].index = i;
         threadData[i].numOfThreads = numOfThreads;
         int pthreadCreateResult = pthread_create(&threads[i], NULL, calculate_pi_thread, &threadData[i]);
         if (pthreadCreateResult != SUCCESSFUL_RESULT) {
-            for (int j = 0; j < i; j++){
+            int j;
+            for (j = 0; j < i; j++){
                 pthread_cancel(threads[j]);
             }
             char error_buffer[ERROR_BUFFER_LEN];
@@ -66,7 +68,7 @@ int main(int argc, char **argv) {
     }
 
     double sum = 0;
-    for (int i = 0; i < numOfThreads; i++){
+    for (i = 0; i < numOfThreads; i++){
         int pthreadJoinResult = pthread_join(threads[i], NULL);
         if (pthreadJoinResult != SUCCESSFUL_RESULT){
             char error_buffer[ERROR_BUFFER_LEN];

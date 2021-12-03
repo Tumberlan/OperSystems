@@ -10,22 +10,24 @@
 #define DELAY 50000
 #define PHILO 5
 #define ERROR_BUFFER_LEN 120
+#define AFTER_EATING_SLEEP_TIME 5000
 
-#define IS_STRING_EMPTY(STR) ((STR) == NULL || (STR)[0] == '\0')
 
-#define LOCKED 0
-#define MUTEX_FREE (-1)
+// Signal в отличие от broadcast работает не настолько ровно
+//sched yeld ни на что не влияет
 
 pthread_cond_t all_forks_cond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t all_forks_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t food_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t forks_mutex[PHILO] = { PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER };
+pthread_mutex_t forks_mutex[PHILO] = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER,
+                                      PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER,
+                                      PTHREAD_MUTEX_INITIALIZER};
 pthread_t threads[PHILO];
 
 void print_error(const char *message, int code) {
-    char buffer[256];
+    char buffer[ERROR_BUFFER_LEN];
     if (strerror_r(code, buffer, sizeof(buffer)) != 0) {
-        strcpy(buffer, "(unable to generate error!)");
+        strcpy(buffer, "Can't generate error");
     }
     write(STDERR_FILENO, buffer, strlen(buffer));
 }
@@ -52,7 +54,7 @@ bool is_mutex_locked(pthread_mutex_t *mutex, int id) {
         if (error_code == EBUSY) {
             return true;
         }
-        print_error("Mutex already locked by other thread", error_code);
+        print_error("Can't trylock thread", error_code);
         cancel_threads(id);
     }
     return false;
@@ -75,7 +77,7 @@ void wait_cond(pthread_cond_t *cond, pthread_mutex_t *mutex, int id) {
 }
 
 void broadcast_cond(pthread_cond_t *cond, int id) {
-    int error_code = pthread_cond_broadcast(cond);
+    int error_code = pthread_cond_signal(cond);
     if (error_code != 0) {
         print_error("Can't broadcast cond variable", error_code);
         cancel_threads(id);
@@ -112,7 +114,7 @@ void pick_forks_up(int phil, int left_fork, int right_fork) {
     }
 
     unlock_mutex(&all_forks_mutex, phil);
-    printf("Philosopher %d: got forks %d and %d.\n", phil, left_fork+1, right_fork+1);
+    printf("Philosopher %d: got forks %d and %d.\n", phil + 1, left_fork + 1, right_fork + 1);
 }
 
 void put_forks_down(int phil, int left_fork, int right_fork) {
@@ -129,7 +131,8 @@ void put_forks_down(int phil, int left_fork, int right_fork) {
 void *philosopher(void *param) {
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-    int* tmp_arr = (int*)param;
+
+    int *tmp_arr = (int *) param;
     int id = tmp_arr[0];
     int right_fork = id;
     int left_fork = id + 1;
@@ -139,24 +142,25 @@ void *philosopher(void *param) {
         right_fork = 0;
     }
 
-    printf("Philosopher %d sat to the table.\n", id);
+    printf("Philosopher %d sat to the table.\n", id + 1);
 
     int food;
     int total = 0;
     while ((food = get_food(id)) > 0) {
         total++;
-        printf("Philosopher %d: gets food %d.\n", id, food);
+        printf("Philosopher %d: gets food %d.\n", id + 1, food);
 
         pick_forks_up(id, left_fork, right_fork);
 
-        printf("Philosopher %d: eats.\n", id);
+        printf("Philosopher %d: eats.\n", id + 1);
         usleep(DELAY * (FOOD - food + 1));
 
         put_forks_down(id, left_fork, right_fork);
+        usleep (AFTER_EATING_SLEEP_TIME);
         sched_yield();
     }
 
-    printf("Philosopher %d is done eating. Ate %d out of %d portions\n", id, total, FOOD);
+    printf("Philosopher %d is done eating. Ate %d out of %d meals\n", id + 1, total, FOOD);
     return param;
 }
 
@@ -172,10 +176,11 @@ void cleanup() {
 int main() {
     int error_code;
     for (int i = 0; i < PHILO; i++) {
-        int arr[1] = {i};
-        error_code = pthread_create(&threads[i], NULL, philosopher, (void *)arr);
+        int *id = malloc(sizeof(int));
+        id[0] = i;
+        error_code = pthread_create(&threads[i], NULL, philosopher, (void *) id);
         if (error_code != 0) {
-            print_error("Unable to create thread", error_code);
+            print_error("Can't create thread", error_code);
         }
     }
     atexit(cleanup);
