@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 #define FOOD 50
-#define DELAY 50000
+#define DELAY 500
 #define PHILO 5
 #define ERROR_BUFFER_LEN 120
 #define AFTER_EATING_SLEEP_TIME 5000
@@ -156,7 +156,7 @@ void *philosopher(void *param) {
         usleep(DELAY * (FOOD - food + 1));
 
         put_forks_down(id, left_fork, right_fork);
-        usleep (AFTER_EATING_SLEEP_TIME);
+        //usleep (AFTER_EATING_SLEEP_TIME);
         sched_yield();
     }
 

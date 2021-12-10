@@ -6,11 +6,17 @@
 
 #IncludeRegexTransform: 
 
-C:/Users/imami/Programming/OperSystems/lab1/main.c
-stdlib.h
-C:/Users/imami/Programming/OperSystems/lab1/stdlib.h
+C:/Users/Igor/ProgProjects/OperSystems/lab11/main.c
 stdio.h
 -
 pthread.h
+-
+stdlib.h
+-
+string.h
+-
+unistd.h
+-
+stdbool.h
 -
 
