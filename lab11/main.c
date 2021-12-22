@@ -11,7 +11,7 @@
 #define SUCCESS 0
 
 pthread_mutex_t mutexes[MUTEX_NUMBER];
-bool child_thread_locked_mutex = false;
+bool child_thread_started = false;
 
 void print_error(const char *message, int code) {
     char buffer[ERROR_BUFFER_LEN];
@@ -37,7 +37,7 @@ void unlock_mutex(int mutex_number) {
 
 void *child_print(void *param) {
     lock_mutex(2);
-    child_thread_locked_mutex = true;
+    child_thread_started = true;
     for (int i = 0; i < NUMBER_OF_LINES; i++) {
         lock_mutex(1);
         write(STDOUT_FILENO, "child thread\n", 13);
@@ -104,7 +104,6 @@ int main() {
     }
 
     lock_mutex(1);
-
     pthread_t thread;
     int error_code = pthread_create(&thread, NULL, child_print, NULL);
     if (error_code != SUCCESS) {
@@ -112,6 +111,10 @@ int main() {
         unlock_mutex(1);
         destroy_mutexes(MUTEX_NUMBER);
         return EXIT_FAILURE;
+    }
+
+    while(!child_thread_started){
+        sched_yield();
     }
 
     main_print();
